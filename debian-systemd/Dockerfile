@@ -13,7 +13,8 @@
 # --cap-add=SYS_ADMIN -v /sys/fs/cgroup:/sys/fs/cgroup:ro
 ########################################################################
 
-FROM debian:jessie
+#FROM debian:jessie
+FROM ubuntu:16.04
 ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
@@ -27,7 +28,16 @@ rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*; \
 rm -f /lib/systemd/system/plymouth*; \
 rm -f /lib/systemd/system/systemd-update-utmp*;
-RUN systemctl set-default multi-user.target
+
+# make the console service log us in and let us quit when we type halt
+RUN cp /lib/systemd/system/console-getty.service /lib/systemd/system/console-getty.service.orig; \
+sed -i 's/--noclear/--noclear --autologin root/' /lib/systemd/system/console-getty.service;
+
+#sed -i 's/^Restart.*//g' /lib/systemd/system/console-getty.service;
+
+#RUN systemctl set-default multi-user.target
+RUN systemctl set-default getty.target && \
+    echo 'root:root' | chpasswd
 ENV init /lib/systemd/systemd
 VOLUME [ "/sys/fs/cgroup" ]
 ENTRYPOINT ["/lib/systemd/systemd"]
